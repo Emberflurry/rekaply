@@ -1,6 +1,3 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-// pages/index.tsx
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import supabase from '../lib/supabase';
@@ -11,13 +8,15 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const currentSession = supabase.auth.getSession().then(({ data }) => {
+    // Check existing session
+    supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         setSession(data.session);
         router.push('/dashboard');
       }
     });
 
+    // Subscribe to future auth changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) router.push('/dashboard');
@@ -29,8 +28,8 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div>
+    <main className="min-h-screen flex items-center justify-center bg-gray-50">
       {!session && <Auth />}
-    </div>
+    </main>
   );
 }

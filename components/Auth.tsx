@@ -1,54 +1,115 @@
-// components/Auth.tsx
 import { useState } from 'react';
 import supabase from '../lib/supabase';
 
-export default function Auth() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [loginInput, setLoginInput] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const isPhone = /^\+?\d+$/.test(loginInput.trim());
 
   const handleAuth = async () => {
     setLoading(true);
-    const { error } = isLogin
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password });
+    const input = loginInput.trim();
 
-    if (error) alert(error.message);
+    let error = null;
+
+    if (isLogin) {
+      if (isPhone) {
+        const { error: pwError } = await supabase.auth.signInWithPassword({
+          phone: input,
+          password,
+        });
+        error = pwError;
+      } else {
+        const { error: pwError } = await supabase.auth.signInWithPassword({
+          email: input,
+          password,
+        });
+        error = pwError;
+      }
+    } else {
+      if (isPhone) {
+        const { error: signupError } = await supabase.auth.signUp({
+          phone: input,
+          password,
+          options: {
+            data: { username },
+          },
+        });
+        error = signupError;
+      } else {
+        const { error: signupError } = await supabase.auth.signUp({
+          email: input,
+          password,
+          options: {
+            data: { username },
+          },
+        });
+        error = signupError;
+      }
+    }
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert(isLogin ? 'Logged in!' : 'Signup complete! Confirm if required.');
+    }
+
     setLoading(false);
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-20 p-4 border rounded">
-      <h2 className="text-xl font-bold mb-4">{isLogin ? 'Log In' : 'Sign Up'}</h2>
+    <div className="bg-white p-6 rounded shadow w-full max-w-md">
+      <h2 className="text-xl font-bold mb-4 text-center text-blue-600">
+        {isLogin ? 'Log In' : 'Sign Up'}
+      </h2>
+
       <input
-        type="email"
-        placeholder="Email"
-        className="w-full p-2 mb-2 border rounded"
-        onChange={(e) => setEmail(e.target.value)}
+        type="text"
+        placeholder="Email or Phone"
+        value={loginInput}
+        onChange={(e) => setLoginInput(e.target.value)}
+        className="w-full mb-3 p-2 border rounded"
       />
+
+      <input
+        type="text"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        className="w-full mb-3 p-2 border rounded"
+      />
+
       <input
         type="password"
         placeholder="Password"
-        className="w-full p-2 mb-4 border rounded"
+        value={password}
         onChange={(e) => setPassword(e.target.value)}
+        className="w-full mb-4 p-2 border rounded"
       />
+
       <button
         onClick={handleAuth}
         disabled={loading}
-        className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+        className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
       >
         {loading ? 'Loading...' : isLogin ? 'Log In' : 'Sign Up'}
       </button>
+
       <p className="text-center mt-4 text-sm">
         {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
         <button
           onClick={() => setIsLogin(!isLogin)}
-          className="text-blue-600 underline"
+          className="text-blue-500 hover:underline"
         >
-          {isLogin ? 'Sign up' : 'Log in'}
+          {isLogin ? 'Sign Up' : 'Log In'}
         </button>
       </p>
     </div>
   );
-}
+};
+
+export default Auth;
